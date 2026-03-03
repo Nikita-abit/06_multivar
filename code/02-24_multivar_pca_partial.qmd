@@ -5,7 +5,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-# Learning objectives  
+   # Learning objectives  
 Our learning objectives are to:  
 
   - Explore what is and when to use multivariate analysis  

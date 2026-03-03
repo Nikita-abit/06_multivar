@@ -1,0 +1,173 @@
+---
+title: "Assignment 5 - K-means"
+author: "Nikita Bhusal"  
+format:
+  html:
+    code-fold: true 
+    embed-resources: true
+    toc: true
+    number-sections: true
+    theme: cerulean
+editor_options: 
+  chunk_output_type: inline
+--- 
+
+# Goal of this assignment  
+The goal of this assignment is for you to **explore the k-means algorithm** learned in class.  
+
+In specific, you will be asked to:  
+  - Use a different number of k than what we did in class,  
+  - Validate the results of the new model, and  
+  - Compare your results with those found in class  
+
+# Instructions  
+You will first need to watch (and code along with) the following k-means video:
+
+  - k-means lab: https://youtu.be/GFgMp5tYiMU?si=CI0E-2r-cYZLGVL1 (start from beginning of video, watch till the 01:10)  
+  - The partial script for the video above is in our GitHub repository, 04-classcode, **02-24_multivar_kmeans_partial.qmd**. Move the script mentioned above into the `code` subfolder of your `06_multivar` project
+  
+**AFTER watching the video and developing the code in class**, then start working on this HW assignment (instructions below):
+  - Move this script into the `code` subfolder of your `06_multivar` project  
+  - On this script, fill your name under the `title` section of the YAML  
+  - Go back to the class k-means script, choose a different number of k than what we did in class, and run it.    
+
+
+```{r}
+
+library(tidyverse)
+library(ggcorrplot)
+library(broom)
+library(car)
+library(factoextra)
+library(ggpmisc)
+```
+
+
+```{r}
+weather <- read.csv("../data/weather_monthsum.csv")
+
+weather
+```
+
+Since k-means only take numerical variables, let's select them now.  
+```{r selecting only numerical vars}
+weather_n <- weather %>%
+  dplyr::select(-c(year:strength_gtex))
+
+weather_n
+```
+
+
+```{r}
+# normalizing the data
+weather_norm <- weather_n %>%
+  mutate(across(everything(),~scale(.x)))
+
+weather_norm
+summary(weather_norm)
+```
+
+Since the choice of k can be subjective, we will need to find an objective way to select the value of k that most properly represents our dataset.  
+
+```{r choosing k - total error}
+# Total error x k
+fviz_nbclust(weather_norm,
+             method = "wss",
+             k.max = 10,
+             FUNcluster = kmeans)
+```
+
+
+
+
+# Questions  
+## 1. What number of k did you select? Why?  
+
+
+The reasons to select k = 3 are: 
+
+1. The total error is 3 to 4 from the above. Although the error shows 3-4, the large drop or elbow started from k=3. 
+2. With k = 4, cluster 2 has comparatively less number of observation (16) so  it might be good to check with reducing the clusters to 3. 
+ 
+
+```{r mod_km3 }
+mod_km3 <-kmeans(weather_norm,
+                 centers = 3,
+                 nstart = 10,
+                   )
+
+mod_km3
+
+```
+
+## 2. How many observations are there in each cluster?  
+
+```{r}
+weather %>%
+  mutate(cluster = mod_km3$cluster) %>%
+  group_by(cluster) %>%
+  tally()
+```
+
+
+The cluster 1 has the highest no. of observations; 337, followed by cluster 2 with n= 253 and cluster 3 with 108. 
+
+
+
+
+## 3. Using the `fviz_cluster()` function, import here the original plot with k=4 did in class, and the new plot with the number of k you selected for this exercise. How do they visually compare? Which one seems to be a better choice, and why?  
+
+```{r mod_km4 }
+ 
+## k = 4 (From Class) to compare k=4 and k=3
+
+mod_km4 <-kmeans(weather_norm,
+                 centers = 4,
+                 nstart = 10,
+                   )
+
+mod_km4
+
+## K means = 4 PCA plot
+
+fviz_cluster(mod_km4,
+             data = weather_norm
+             )
+```
+
+
+```{r r kmeans_k3_pca_plot}
+fviz_cluster(mod_km3,
+             data = weather_norm
+             )
+```
+After comparing both plots with k= 4 and k= 3, the plot with k=3 looks better. There are few reasons for this:
+1. From the elbow plot, the large drop started from k=3 as there is a clear bend at this point.
+2. Visually, the clusters in k=3 shows well-separated and compact clusters compared to the clusters from k=4. At 4-clusters, the is a small fraction of cluster seen on the lower-left hand side which does not substantially separate the grouping or possible extra-cluster. Therefore for better visualization and interpretation, k=3 is more appropriate choice. 
+
+
+# Submitting your work  
+Once you have developed all the code and answers, make sure to Render this quarto file.  
+
+**Notes on rendering**:  
+
+- Make sure to render your work and inspect how the final html look like.  
+- If it does not look professional for whatever reason, then fix the issue, re-render it, recheck.  
+- Only send me your work once your html file looks professional.  
+  - **DO NOT** delete the file's heading levels (# and ##). They set up the proper heading 1 and 2 levels, and I use them to guide my grading.  
+  - If a given chunk is also outputting warnings or messages, inhibit this behavior by changing the chunk options `message` and `warning` to `FALSE` (I'll demo this in a moment).  
+  
+  - If, after rendered, 2 lines of text are connected and you wish to "break line" between them, add 2 extra spaces after the first one (I'lld demo this in a moment).  
+
+After rendering, an .html file will be created on your `code` folder.  
+
+Rename this file to `Assignment-05-kmeans-LASTNAME.html`.    
+
+For ex., mine would be `Assignment-05-kmeans-Bastos.html`.
+
+Submit your work by uploading the **html** file to **eLC Assignment #5 - K-means** by Monday March 2nd 11:59 pm.  
+  
+
+
+
+
